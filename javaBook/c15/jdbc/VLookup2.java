@@ -1,0 +1,103 @@
+//: c15:jdbc:VLookup2.java
+// From 'Thinking in Java, 2nd ed.' by Bruce Eckel
+// www.BruceEckel.com. See copyright notice in CopyRight.txt.
+// GUI version of Lookup.java.
+// <applet code=VLookup2
+// width=500 height=200></applet>
+import javax.swing.*; 
+import java.awt.*;
+import java.awt.event.*;
+import javax.swing.event.*;
+import java.sql.*;
+import com.bruceeckel.swing.*;
+
+public class VLookup2 extends JApplet {
+  Statement s;
+  JTextField searchFor = new JTextField(20);
+  JLabel completion = 
+    new JLabel("                        ");
+  JTextArea results = new JTextArea(40, 20);
+  public void init() {
+    searchFor.getDocument().addDocumentListener(
+      new SearchL());
+    JPanel p = new JPanel();
+    p.add(new Label("Last name to search for:"));
+    p.add(searchFor);
+    p.add(completion);
+    Container cp = getContentPane();
+    cp.add(p, BorderLayout.NORTH);
+    cp.add(results, BorderLayout.CENTER);
+    try {
+
+        // Load the Hypersonic SQL JDBC driver
+        Class.forName("org.hsql.jdbcDriver");
+
+        // Connect to the "test" database
+        // It will be create automatically if it does not yet exist
+        // 'testfiles' in the URL is the name of the database
+        // "sa" is the user name and "" is the (empty) password
+
+        Connection c = DriverManager.getConnection(
+            "jdbc:HypersonicSQL:http://1.1.1.4:/db_eng/hypersonicsql/demo/test","sa",""
+        );
+   
+      s = c.createStatement();
+    } catch(Exception e) {
+      results.setText(e.toString());
+    }
+  }
+  class SearchL implements DocumentListener {
+    public void changedUpdate(DocumentEvent e){}
+    public void insertUpdate(DocumentEvent e){
+      textValueChanged();
+    }
+    public void removeUpdate(DocumentEvent e){
+      textValueChanged();
+    }
+  }
+  public void textValueChanged() {
+    ResultSet r;
+    if(searchFor.getText().length() == 0) {
+      completion.setText("");
+      results.setText("");
+      return;
+    }
+    try {
+      // Name completion:
+      r = s.executeQuery(
+        "SELECT LASTNAME FROM ADDRESS " +
+        "WHERE (LASTNAME Like '" +
+        searchFor.getText()  + 
+        "%') ORDER BY LASTNAME");
+      if(r.next()) 
+        completion.setText(
+          r.getString("LASTNAME"));
+      r = s.executeQuery(
+        "SELECT FIRSTNAME, LASTNAME, STREET " +
+        "FROM ADDRESS " +
+        "WHERE (LASTNAME='" + 
+        completion.getText() +
+        "') AND (STREET Is Not Null) " +
+        "ORDER BY FIRSTNAME");
+    } catch(Exception e) {
+      results.setText(
+        searchFor.getText() + "\n");
+      results.append(e.toString());
+      return; 
+    }
+    results.setText("");
+    try {
+      while(r.next()) {
+        results.append(
+          r.getString("LastName") + ", " 
+          + r.getString("FirstName") + 
+          ": " + r.getString("Street") + "\n");
+      }
+    } catch(Exception e) {
+      results.setText(e.toString());
+    }
+  }
+  public static void main(String[] args) {
+    Console.run(new VLookup2(), 500, 200);
+  }
+} ///:~

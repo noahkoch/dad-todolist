@@ -1,0 +1,67 @@
+# $Id: makefile.jmk,v 1.1.1.1 2000/09/26 11:20:34 ramsdell Exp $
+
+# A makefile file for jmk -- Make in Java
+
+# To recompile jmk, start jmk in the root of the directory structure.
+# On Unix, the command is:
+# $ jmk -f edu/neu/ccs/jmk/makefile.jmk
+#
+
+javaflags = "-O";
+
+# jmk's main package.
+pkg = "edu.neu.ccs.jmk";
+# packages including the GUIs.
+pkgs = pkg "edu.neu.ccs.jmk.awt" "edu.neu.ccs.jmk.swing";
+
+srcdirs = (subst ".", "/", pkgs);
+# srcs contains all the Java source files.
+srcs = (glob (join srcdirs, "/*.java"));
+
+inf = (cat (subst ".", "/", pkg) "/jmk.mf");
+jar = "jmk.jar";
+
+"all":	jar;    # all is the default target.
+
+# The following rule only compiles out of date 
+# source files.  Sometimes the clean target
+# must be used to force the compilation of the 
+# entire system, such as when an inherited class
+# is changed.
+jar:	srcs;
+{
+  exec "javac" javaflags ?;
+  exec "jar" "cmf" inf @ "edu";
+}
+
+zip = "jmk.zip";
+readme = "readme.text";
+
+"zip":	zip;
+
+zip:	jar;
+{
+  create readme "The documentation and sources are in the JAR file.";
+  exec "zip" zip readme jar;
+  delete readme;
+}
+
+# doc is the target for running javadoc.
+"doc": "docs" "docs/index.html";
+
+"docs":;
+{
+  mkdir @;
+}
+
+"docs/index.html": srcs;
+{
+  exec "javadoc" "-package" "-d" "docs" pkgs;
+}
+
+"clean":;
+{
+  delete (join srcdirs, "/*.class") jar;
+}
+
+".PHONY": "clean" "doc" "zip" "all";

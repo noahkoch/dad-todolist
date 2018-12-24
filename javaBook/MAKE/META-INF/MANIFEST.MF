@@ -1,0 +1,4 @@
+Manifest-Version: 1.0
+Main-Class: edu.neu.ccs.jmk.Make
+Created-By: 1.2 (Sun Microsystems Inc.)
+

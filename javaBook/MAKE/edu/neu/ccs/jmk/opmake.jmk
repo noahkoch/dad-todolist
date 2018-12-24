@@ -1,0 +1,10 @@
+# $Id: opmake.jmk,v 1.1.1.1 2000/09/26 11:20:35 ramsdell Exp $
+
+# This make file runs make recursively
+
+make = "edu.neu.ccs.jmk.Make";
+
+"all":;
+{
+  forname make "-d" "-f" "edu/neu/ccs/jmk/tester.jmk";
+}

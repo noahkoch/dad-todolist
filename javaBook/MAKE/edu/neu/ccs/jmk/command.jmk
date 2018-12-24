@@ -1,0 +1,22 @@
+# $Id: command.jmk,v 1.1.1.1 2000/09/26 11:20:34 ramsdell Exp $
+
+# Some tests of commands
+
+depend = function(a) a "two" "three" end;
+
+target = "all";
+
+target: (depend "one"); {
+  note "@ =" @;
+  note "< =" <;
+  note "? =" ?;
+  note "% =" %;
+  note "(cat ?) =" (cat ?);
+  note "(subst \"e\", \"E\", ?) =" (subst "e", "E", ?);
+}
+
+(depend "one"):; {
+  note "made" @;
+}
+
+".PHONY": (depend "one");

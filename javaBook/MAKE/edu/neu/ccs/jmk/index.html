@@ -1,0 +1,138 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+                 "http://www.w3.org/TR/REC-html40/loose.dtd">
+<!-- $Id: index.html,v 1.1.1.1 2000/09/26 11:20:34 ramsdell Exp $ -->
+<HTML>
+<HEAD>
+   <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=iso-8859-1">
+   <META NAME="Author" CONTENT="John D. Ramsdell">
+   <META NAME="GENERATOR" CONTENT="GNU Emacs 19">
+   <TITLE>Make in Java</TITLE>
+</HEAD>
+
+<!--
+/*
+ * Copyright 1997 by John D. Ramsdell
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
+-->
+
+<BODY bgcolor="white">
+<A NAME="Top"></A>
+<H1>Make in Java</H1>
+
+Have you ever noticed that there are two kinds of makefiles delivered
+with Sun's Bean Box?  GNU make is used on machines running Unix, and
+Microsoft's nmake is used on machines running Microsoft Windows.  Have
+you ever wonder if Java could be used to implement a cross platform
+make utility?  Make in Java is that utility.
+
+<p>Make in Java (<tt>jmk</tt>) is an application which is used to ensure
+that a set of files is in a consistent state. If <tt>jmk</tt> detects
+an inconsistency, it executes commands that correct the
+inconsistency. <tt>jmk</tt> is based on the make utility which is part
+of most Unix systems, but is designed to be easily run on a variety of
+machines and operating systems.
+
+<p>Make in Java can be run in text mode by a shell.  Alternatively, it
+will create its own graphical user interface.  The GUI presents the
+results of make runs initiated by menu selection or keyboard commands.
+A makefile can be reloaded by the GUI.  The targets of the make can
+also be changed.
+
+<p>Make in Java is freely redistributable software so that the utility
+can follow any code that uses it.  It should be of interest to any one
+distributing source code along with automated instructions that
+describe how to construct the program from the source code.
+
+<ul>
+<li>
+<a href="jmk.html">User documentation</a>
+- a complete description of Make in Java in HTML
+<li>
+<a href="../../../../jmk.jar">Java archive</a>
+- the makefile, HTML, Java sources, and the class files as a JAR
+file
+<li>
+<a href="../../../../jmk.zip">Zip archive</a>
+- the Java archive and a readme file as a Zip file
+<li>
+<a href="changes.html">Status</a>
+- change log and version information
+<li>
+<a href="lesser.txt">Copyright notice</a>
+- the GNU Lesser General Public License
+</ul>
+
+<h2>Incompatibility Notice</h2>
+
+Version 1.0 and above use semicolon as the generic path separator
+character, while earlier versions used colon.  Semicolon was adopted
+so as to allow the use of colon in a file name.  Old makefiles that
+use generic path lists must be modified to reflect this change.
+
+<h2>Installation</h2>
+
+If your Java virual machine accepts the <tt>-jar</tt> option, you can
+run <tt>jmk</tt> with the command:
+<blockquote>
+<b><tt>java -jar jmk.jar</tt></b> 
+[ <a href="jmk.html#options">options</a> ] [ target ]*
+</blockquote>
+
+The main entry point to <tt>jmk</tt> is in the class
+<tt>edu.neu.ccs.jmk.Make</tt>.  If your Java virual machine does not
+accept the <tt>-jar</tt> option, place the JAR file in the class path
+and start the virtual machine with that class.  The JAR file contains
+scripts for some operating systems that may serve as useful templates.
+
+<p>To test the installation with JDK 1.2, extract the contents of the
+JAR file into an inferior directory and change to the directory.
+Start <tt>jmk</tt> with the command
+<blockquote>
+<tt>java -jar ../jmk.jar -f edu/neu/ccs/jmk/makefile.jmk</tt>  
+</blockquote>
+This should create <tt>jmk.jar</tt> from its sources.
+
+<p>Window appearance preferences can be set by placing the file 
+<tt><a href="jmk.html#properties">jmk.properties</a></tt>
+in the class path.
+
+<h2>Hints</h2>
+
+The rules given in a <tt>jmk</tt> makefile can invoke programs as
+separate processes.  To produce a machine independent makefile, a
+makefile should only exec programs that use the same command line
+argument syntax across platforms.  Examples of such programs include
+Sun's Java compiler (<tt>javac</tt>) and their Java Archive Tool
+(<tt>jar</tt>).
+
+<h2>Thanks</h2>
+
+<a href="mailto:orefalo@capgemini.fr">Olivier Refalo</a>
+contributed the entire Swing graphical interface.  
+Use the <tt>-s</tt> option to view it.
+
+<a name="trademark"></a>
+<h2>Notes</h2>
+Java is a trademark of Sun Microsystems Incorporated.
+<hr>
+[<a href="#top">Top</a>]
+
+<address>
+<a href="http://jmk.sourceforge.net">John D. Ramsdell</a> 
+</address>
+</BODY>
+</HTML>

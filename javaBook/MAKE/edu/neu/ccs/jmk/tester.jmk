@@ -1,0 +1,120 @@
+# $Id: tester.jmk,v 1.1.1.1 2000/09/26 11:20:34 ramsdell Exp $
+
+# Some testers -- run this in verbose mode
+
+# From document
+Subst = (subst "a", "A", "java" "class");
+
+Patsubst = (patsubst ".c", ".o", "a.c" "b.c");
+
+Cat = (cat "a/b" ";" "c/d" ";" "e/f");
+
+Glob = (glob "edu/neu/ccs/jmk/M*.java");
+
+Getprop = (getprop "user.dir");
+
+Join = (join "A" "B", ".java" ".class");
+
+Equal = (equal "A" "B", "A" "B");
+
+First = (first Join);
+
+Rest = (rest Join);
+
+# test function loader
+reverse = (load "edu.neu.ccs.jmk.ReverseFunction");
+
+Reverse = (reverse Join) "end marker";
+
+Dirs = (dirs "edu");
+
+Classes = (glob (join Dirs, "/*.class"));
+
+# Other tests
+
+odd_chars = "abc\\def\"ghi";
+
+notequal = (equal "A" "B", "A" "b");
+
+# This should create a null list.
+dir_missing = (glob "wacky/wild/*.java");
+
+pkg = (subst "/", ".", "a/b/c");
+
+p0 = (patsubst ".java", ".class", Glob);
+
+p1 = (patsubst "%.java", "%.class", Glob);
+
+p2 = (patsubst "A%java", "B.cl%ass", Glob);
+
+# Functions
+
+joincat = function(a, b) (join a, b) (cat a b) end;
+
+x0 = (joincat "a" "b", "y" "z");
+
+x1 = { a = "a"; b = "b"; a b };
+
+x2 = { } ;
+
+x3 = { f = function(x, y) 
+             if y then 
+               (f x y,) 
+             else 
+               x
+             end 
+           end;
+       f};
+
+x4 = (x3 "a", "b");
+
+x5 = { g = function(x, y) 
+             if y then 
+               (g x y,) 
+             else 
+               x
+             end 
+           end;
+       (g "a", "b") };
+
+x6 = do h (x = "a", y = "b")
+       if y then 
+         (h x y,) 
+       else
+         x
+       end 
+     end;
+
+# compute the directories that have source files.
+
+# Predicate for filter
+dir_has_src = function(dir) 
+  (glob (cat dir "/*.java")) 
+end;
+
+# Filter out elements of list that do not satisfy pred
+filter = function(pred, list)
+  if list then
+    if (pred (first list)) then
+      (first list) (filter pred, (rest list))
+    else
+      (filter pred, (rest list))
+    end
+  else
+  end
+end;
+
+dirs_with_source = (filter dir_has_src, (dirs "edu"));
+
+# Forname
+
+reverser="edu.neu.ccs.jmk.ReverseOperator";
+
+"reverse":;
+{
+  note "file names with special characters" Cat;
+  note "the following should succeed";
+  forname reverser "1" "2" "3";
+  note "the following should fail";
+  forname reverser;
+}

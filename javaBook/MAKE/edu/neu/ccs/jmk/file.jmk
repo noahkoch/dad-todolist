@@ -1,0 +1,18 @@
+# $Id: file.jmk,v 1.1.1.1 2000/09/26 11:20:35 ramsdell Exp $
+
+# This tests various file operations
+
+dir = "delete_me";
+
+"all":;
+{
+  create "a.tmp" "one line" "two lines";
+  mkdir dir;
+  rename "a.tmp" "b.tmp";
+  copy "b.tmp" "c.tmp";
+}
+
+"clean":;
+{
+  delete "*.tmp" dir;
+}

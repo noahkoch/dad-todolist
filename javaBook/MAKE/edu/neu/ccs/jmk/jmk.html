@@ -1,0 +1,962 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+                 "http://www.w3.org/TR/REC-html40/loose.dtd">
+<!-- $Id: jmk.html,v 1.1.1.1 2000/09/26 11:20:34 ramsdell Exp $ -->
+<HTML>
+<HEAD>
+   <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=iso-8859-1">
+   <META NAME="Author" CONTENT="John D. Ramsdell">
+   <META NAME="GENERATOR" CONTENT="GNU Emacs 19">
+   <TITLE>jmk-Make in Java</TITLE>
+</HEAD>
+
+<!--
+/*
+ * Copyright 1997 by John D. Ramsdell
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
+-->
+
+<BODY bgcolor="white">
+<a name="Top"></a>
+<h1>jmk - Make in Java</h1>
+<blockquote>
+
+Maintain a group files in a consistent state
+
+</blockquote>
+<h2>SYNOPSIS</h2>
+<blockquote>
+
+<b><tt>jmk</tt></b> [ <a href="#options">options</a> ] [ target ]*
+<br>
+<b><tt>java -jar jmk.jar</tt></b> [ <a href="#options">options</a> ] [ target ]*
+
+</blockquote>
+<h2>DESCRIPTION</h2>
+<blockquote>
+
+[<a href="#rules">Rules</a>]
+[<a href="#file names">File&nbsp;Names</a>]
+[<a href="#assignments">Assignments</a>]
+[<a href="#functions">Functions</a>]
+[<a href="#commands">Commands</a>]
+[<a href="#rule patterns">Rule&nbsp;Patterns</a>]
+[<a href="#special targets">Special&nbsp;Targets</a>]
+[<a href="#file inclusion">File&nbsp;Inclusion</a>]
+[<a href="#conditionals">Conditionals</a>]
+[<a href="#expressions">Expressions</a>]
+[<a href="#example">Example</a>]
+[<a href="#grammar">Grammar</a>]
+
+<p><tt>jmk</tt> is an application which is used to ensure that a set
+of files is in a consistent state. If <tt>jmk</tt> detects an
+inconsistency, it executes commands that correct the
+inconsistency. The rules used to detect and correct inconsistencies
+are given in a makefile.
+
+<p><tt>jmk</tt> is designed to support the task of writing platform
+independent makefiles.  File names and path lists are written in a
+canonical form, and translated by <tt>jmk</tt> into native form.
+
+<p>The rules given in a <tt>jmk</tt> makefile can invoke programs as
+separate processes.  To produce a machine independent makefile, a
+makefile should only invoke programs that use the same command line
+argument syntax across platforms.  Examples of such programs include
+Sun's Java compiler (<tt>javac</tt>) and their Java Archive Tool
+(<tt>jar</tt>).
+
+</blockquote>
+<a name="rules"></a>
+<H3>Rules</H3>
+<blockquote>
+
+A makefile contains a sequence of statements that are used to build a
+database of rules.  The elements of a makefile rule are targets,
+prerequisites, and commands.  Typically, targets and prerequisites are
+names of files. A makefile rule is a nonempty list of targets
+terminated by a colon, a list of prerequisites terminated by a
+semicolon, and optionally, a sequence of commands delimited by curly
+braces. A rule that keeps file <TT>A.class</TT> consistent with
+<TT>A.java</TT> follows.
+<blockquote>
+<pre>
+"A.class": "A.java"; {
+  exec "javac" "-g" "A.java";
+}
+</pre>
+</blockquote>
+This rule runs the Java compiler when <TT>A.class</TT> is older than
+<TT>A.java</TT> or nonexistent.
+
+<p>A makefile rule without commands adds prerequisites to the end of a
+target's list of prerequisites.  For each target, only one makefile
+rule can contain commands.
+
+<P>Internally, there is one rule for each target.  The interpretation
+of a makefile rule depends on whether its target exists. When the
+target does not exist, each prerequisite is checked for consistency in
+textual order, and then the rule's commands are executed
+sequentially. The rule fails if an error is detected while running a
+command or if the rule has no prerequisites and no commands. A target
+with no rule implied by the makefile behaves as if it is the target of
+a rule with no prerequisites and no commands.
+
+<P>When the target exists, the rule's commands are executed only if
+the target is in an inconsistent state.  Each prerequisite is checked
+for consistency in textual order.  The target's state is consistent if
+the consistency check of the prerequisites found they were all
+consistent, each prerequisite exists, and no prerequisite is younger
+than the target. When the target is in an inconsistent state, the
+rule's commands are executed sequentially. The rule fails if an error
+is detected while running a command.
+
+<p>Errors generated by commands are ignored when a command is preceded
+by the '-' character.
+
+</blockquote>
+<a name="file names"></a>
+<H3>File Names</H3>
+<blockquote>
+
+File names are given by strings, which are sequences of characters
+delimited by double quotes.  The backslash and double quote character
+may be included in a string by preceding each character with a
+backslash.
+
+<p>The slash character separates the directory and file components in
+a file name.  When running commands and testing for the existence of
+files, the slash character is replaced by the character appropriate
+for the host, which is the first character of the system property
+<code>file.separator</code>.
+
+<p>The semicolon character separates file names in a path list.
+When running commands and testing for the existence of
+files, the semicolon character is replaced by the character appropriate
+for the host, which is the first character of the system property
+<code>path.separator</code>.
+
+<p>To enhance portability, file names should contain only the
+alphanumeric, the period, the underscore, and the separator
+characters described above.  <tt>jmk</tt> treats the asterisk and the
+percent sign characters specially in some contexts, so these should be
+avoided in file names.
+
+</blockquote>
+<a name="assignments"></a>
+<H3>Assignments</H3>
+<blockquote>
+There are two types of values used to specify rules: lists of strings
+and functions.  An assignment associates a value with a variable.
+An assignment is a identifier and an equal sign, followed by a
+semicolon terminated expression sequence that denotes a value.
+
+<blockquote>
+<pre>
+javac = "javac" "-g";
+</pre>
+</blockquote>
+
+After the assignment, a reference to the variable is replaced by its
+value.  A reference to an unassigned variable produces the empty list.
+In the following example, <tt>javac</tt> is replaced by two strings.
+<blockquote>
+<pre>
+exec javac "A.java";
+</pre>
+</blockquote>
+
+Assignments occur while reading the makefile and before any rules are
+interpreted.
+
+<p>In common usage, variables are assigned lists of strings and the
+elements of the right-hand-side of an assignment are string
+constants, variable references, and calls of predefined functions.  A
+complete description of <a href="#expressions">expressions</a> occurs
+later in this document.
+
+</blockquote>
+<a name="functions"></a>
+<H3>Functions</H3>
+<blockquote>
+
+A list of strings can be transformed by a function.  A function call is
+delimited by parenthesis.  The first element of the call is an
+expression, which is usually the variable of a predefined function.
+The parameters to the call are comma separated expression sequences.
+A description of each predefined function follows.
+
+<dl>
+<dt><tt>(subst</tt> <em>pattern</em>, <em>replacement</em>, 
+<em>list</em><tt>)</tt>
+<dd>
+The function <tt>subst</tt> produces a list of the same
+length as <em>list</em>.  Each string in the list is the result of
+replacing every non-overlapping occurrence of <em>pattern</em> by
+<em>replacement</em> in the corresponding element of <em>list</em>.
+
+<p>For example,
+<blockquote>
+<pre>
+(subst "a", "A", "java" "class")
+</pre>
+</blockquote>
+produces the value <tt>"jAvA" "clAss"</tt>.
+<p>
+<dt><tt>(patsubst</tt> <em>pattern</em>, <em>replacement</em>, 
+<em>list</em><tt>)</tt>
+<dd>
+The function <tt>patsubst</tt> produces a list of the same
+length as <em>list</em>.  Each string in <em>list</em> that matches
+<em>pattern</em> is replaced with <em>replacement</em>.  The pattern
+may contain a percent sign which acts as a wild card, matching any
+number of any characters within a string.  A pattern without the
+percent sign behaves as if it starts with a percent sign.
+
+<p>If <em>replacement</em> contains any number of percent signs, each
+is replaced by the text that matched the percent sign in <em>pattern</em>.
+A replacement without the percent sign behaves as if it starts with a
+percent sign.
+
+<p>For example,
+<blockquote>
+<pre>
+(patsubst ".c", ".o", "a.c" "b.c")
+</pre>
+</blockquote>
+produces the value <tt>"a.o" "b.o"</tt>.
+<p>
+<dt><tt>(cat</tt> <em>list</em><tt>)</tt>
+<dd>
+The <tt>cat</tt> function concatenates all the strings in
+<em>list</em>.  When there are no strings in <em>list</em>, it returns
+a list with a single null string.
+
+<p>For example,
+<blockquote>
+<pre>
+(cat "a/b" ":" "c/d" ":" "e/f")
+</pre>
+</blockquote>
+produces the value <tt>"a/b:c/d:e/f"</tt>.
+<p>
+<dt><a name="glob"></a><tt>(glob</tt> <em>list</em><tt>)</tt>
+<dd>
+The <tt>glob</tt> function expands file names that contain the wild
+card character asterisk.  Each string in <em>list</em> is translated
+into a file name which uses the host's separators.  All file
+separators in the file name must precede every wild card.  A file name
+with wild cards is expanded into a list of file names from the given
+directory that match the pattern.  A file name is added to the output
+after replacing the host's separator characters by the generic ones.
+
+<p>For example, if the directory <tt>pkg</tt> contains two files,
+<tt>"A.java"</tt> and <tt>"B.java"</tt>,
+<blockquote>
+<pre>
+(glob "pkg/*.java")
+</pre>
+</blockquote>
+produces the value <tt>"pkg/A.java" "pkg/B.java"</tt>.
+<p>
+<dt><tt>(dirs</tt> <em>list</em><tt>)</tt>
+<dd>
+The function <tt>dirs</tt> produces a list of all directories in the
+files named in <em>list</em>.
+<p>For example, if the directory <tt>a</tt> contains <tt>b</tt> and
+<tt>c</tt>, and <tt>c</tt> contains directory <tt>d</tt>,
+<blockquote>
+<pre>
+(dirs "a")
+</pre>
+</blockquote>
+produces the value <tt>"a" "a/b" "a/c" "a/c/d"</tt>.
+<p>
+<dt><tt>(getprop</tt> <em>list</em><tt>)</tt>
+<dd>
+The function <tt>getprop</tt> uses each string in <em>list</em>
+as a key into the system properties.  If the system has a property
+associated with the key, that string is added to the output after
+replacing the host's separator characters with the generic ones.
+<p>For example,
+<blockquote>
+<pre>
+(getprop "user.dir")
+</pre>
+</blockquote>
+produces the user's current directory using the generic separators.
+<p>
+<dt><tt>(join</tt> <em>prefixes</em>, <em>suffixes</em><tt>)</tt>
+<dd>
+The function <tt>join</tt> concatenates each string in
+<em>prefixes</em> with every string in <em>suffixes</em>.
+<p>For example,
+<blockquote>
+<pre>
+(join "A" "B", ".java" ".class")
+</pre>
+</blockquote>
+produces <tt>"A.java" "A.class" "B.java" "B.class"</tt>.
+<p>
+<dt><tt>(equal</tt> <em>list1</em>, <em>list2</em><tt>)</tt>
+<dd>
+The function <tt>equal</tt> returns a list containing the
+string <tt>"true"</tt> if <em>list1</em> and <em>list2</em> are the
+same, otherwise, it returns the empty list.  This function is most
+often used in the test of a <a href="#conditionals">conditional
+statement</a> or a <a href="#conditional_expressions">conditional
+expression</a>. 
+
+<p>For example,
+<blockquote>
+<pre>
+(equal "A" "B", "A" "B")
+</pre>
+</blockquote>
+produces <tt>"true"</tt>.
+<p>
+<dt><tt>(first</tt> <em>list</em><tt>)</tt>
+<dd>The function <tt>first</tt> returns the first string in
+<em>list</em> or the empty list if <em>list</em> is empty.
+<p>For example,
+<blockquote>
+<pre>
+(first "A" "B" "C")
+</pre>
+</blockquote>
+produces <tt>"A"</tt>.
+<p>
+<dt><tt>(rest</tt> <em>list</em><tt>)</tt>
+<dd>The function <tt>rest</tt> returns all but the first string in
+<em>list</em> or the empty list if <em>list</em> is empty.
+<p>For example,
+<blockquote>
+<pre>
+(rest "A" "B" "C")
+</pre>
+</blockquote>
+produces <tt>"B" "C"</tt>.
+<p>
+<dt><tt>(load </tt> <em>class</em><tt>)</tt>
+<dd>The function <tt>load</tt>
+dynamically loads a class that implements the
+<tt>Function</tt> interface, and returns a new instance of the class.
+<pre>
+package edu.neu.ccs.jmk;
+public interface Function
+extends Value
+{
+  String getName();
+
+  /**
+   * Invoke this function.
+   * @param args parameters to the function
+   * @param list a string list 
+   * @return result of invocation appended to the list
+   * (if list is non-null, result must be a string list)
+   * @exception Exception if invocation failed
+   */
+  Value invoke(Value[] args, StringList list) throws Exception;
+}
+</pre>
+<p>An example of a loadable function is in
+<tt>edu.neu.ccs.jmk.ReverseFunction</tt>. 
+</dl>
+
+</blockquote>
+<a name="commands"></a>
+<H3>Commands</H3>
+<blockquote>
+
+Commands are executed when a target is inconsistent.  A command is an
+operator followed by a semicolon terminated expression sequence.  When
+the command is executed, the operands of the command are produced by
+evaluating the expression sequence, which must produce a list of
+strings.  The evaluation occurs in an environment in which the
+following variables are bound.
+
+<dl>
+<dt><tt>@</tt>
+<dd>
+The <tt>@</tt> variable is bound to the target of the
+current rule.
+<dt><tt>&lt;</tt>
+<dd>
+The <tt>&lt;</tt> variable is bound to the first
+prerequisite of the rule if there is one, otherwise, it is bound to
+the null list.
+<dt><tt>?</tt>
+<dd>
+The <tt>?</tt> variable is bound to the list of
+prerequisites that are out of date with respect to current target.
+<dt><tt>%</tt>
+<dd>
+In rules that receive their commands from a rule pattern,
+the <tt>%</tt> variable is bound to the characters in the
+target that match the wild card in the rule pattern's target.
+Otherwise, the <tt>%</tt> variable is bound to 
+the null list.
+<dd>
+</dl>
+
+The generic separators in each operand are replaced by the host's
+separators before they are given to the operator.
+
+<P>The operator determines the method invoked on the operands used to
+implement a command.  
+<dl>
+<dt><tt>exec</tt>
+<dd>
+The <tt>exec</tt>
+operator executes a command in a separate process using a Java runtime
+exec method. 
+<dt><tt>delete</tt>
+<dd>
+The <tt>delete</tt> file operator deletes the named files.
+<dt><tt>delall</tt>
+<dd>
+The <tt>delall</tt> file operator deletes the named files.
+If the file names a directory, it recusively deletes its contents.
+<dt><tt>mkdir</tt>
+<dd>
+The <tt>mkdir</tt> file operator creates the named directories.
+<dt><tt>mkdirs</tt>
+<dd>
+The <tt>mkdirs</tt> file operator creates the named directories,
+including any necessary parent directories. 
+<dt><tt>copy</tt>
+<dd>
+The <tt>copy</tt> file operator copies a file.
+<dt><tt>rename</tt>
+<dd>
+The <tt>rename</tt> file operator renames a file.
+<dt><tt>create</tt>
+<dd>
+The <tt>create</tt> operator creates a file given by its first operand
+and than writes any remaining operands into the file as separate lines
+of text.
+<dt><tt>note</tt>
+<dd>
+The <tt>note</tt> operator does nothing.  It is used to print notes 
+during a make run.
+<dt><tt>forname</tt>
+<dd>
+The <tt>forname</tt> operator dynamically loads and executes a Java
+object provided with the makefile.  The first operand must name a
+class that implements the Operator interface given below.
+<pre>
+package edu.neu.ccs.jmk;
+public interface Operator
+{
+  String getName();
+
+  /**
+   * Execute the operation specified by the operator.
+   * @param args parameters to the operation
+   * @param out place to write messages
+   * @exception CommandFailedException if operation failed
+   */
+  void exec(String[] args, java.io.PrintWriter out)
+       throws CommandFailedException;
+}
+</pre>
+<p>An example of a dynamically loadable operator is in
+<tt>edu.neu.ccs.jmk.ReverseOperator</tt>. 
+<p>The class that starts <tt>jmk</tt> is edu.neu.ccs.jmk.Make.
+It implements the Operator interface
+allowing the invocation of <tt>jmk</tt> from commands in a makefile.
+<pre>
+make = "edu.neu.ccs.jmk.Make";
+
+"all":;
+{
+  forname make "-d" "-f" "edu/neu/ccs/jmk/tester.jmk";
+}
+</pre>
+</dl>
+
+The five file operators expand a file name with asterisks into a list
+of file names from the given directory that match the pattern.  The
+restrictions on the pattern are the same as the ones for the <a
+href="#glob"><tt>glob</tt></a> function.  The expansion occurs when
+the command executes.
+
+<p>If the operator of a command is preceded by the '-' character,
+errors that occur as the command executes are ignored.
+
+</blockquote>
+<a name="rule patterns"></a>
+<H3>Rule Patterns</H3>
+<blockquote>
+
+A target with no commands explicitly given in the makefile may infer
+commands from rule patterns.  Syntactically, a rule pattern is the
+same as a rule except that the target contains one occurrence of the
+wild card character, the percent sign.  Prerequisites may also contain
+a wild card character.  A rule pattern for Java classes follows.
+
+<blockquote>
+<pre>
+"%.class": "%.java"; {
+  exec "javac" "-g" &lt;;
+}
+</pre>
+</blockquote>
+
+The list of rule patterns are searched in reverse textual order after
+a makefile has been read.  A rule pattern is applicable to a target if
+the pattern's target is equal to the target after a matching string is
+substituted for the wild card character.  The match is substituted for
+the wild card characters in the pattern's prerequisites and the
+prerequisites are added to the front of the target's list of
+prerequisites.  The match is also the value of the percent sign
+variable in commands inferred by the pattern.
+
+</blockquote>
+<a name="special targets"></a>
+<H3>Special Targets</H3>
+<blockquote>
+
+A makefile rule with the target <tt>".PHONY"</tt> declares that its
+prerequisites are not the names of files.  When one of the
+prerequisites appears as a target, the interpretation of its
+associated rule always assumes the target does not exist.
+
+</blockquote>
+<a name="file inclusion"></a>
+<H3>File Inclusion</H3>
+<blockquote>
+
+The <tt>include</tt> statement tells <tt>jmk</tt> to suspend reading
+the current makefile and read one or more other makefiles before
+continuing.  The statement is a line in the makefile that looks like
+this:
+
+<blockquote>
+<tt>include</tt> List ;
+</blockquote>
+where List evaluates to a list of strings, each is used as a file name.
+
+</blockquote>
+<a name="conditionals"></a>
+<H3>Conditionals</H3>
+<blockquote>
+
+A conditional statement causes part of a makefile to be obeyed or ignored
+depending on the value of a list of strings.  An empty list counts as
+false, and a nonempty list of strings counts as true.  The syntax is the
+traditional if-then-else-end syntax, where the else part is optional:
+
+<blockquote>
+<tt>if</tt> List <tt>then</tt> Statements <tt>end</tt>
+</blockquote>
+or
+<blockquote>
+<tt>if</tt> List <tt>then</tt> Statements 
+<tt>else</tt> Statements <tt>end</tt>
+</blockquote>
+
+For example,
+<blockquote>
+<pre>
+if (equal "Solaris", (getprop "os.name")) then
+  include "sun.jmk";
+end
+</pre>
+</blockquote>
+includes the file <tt>"sun.jmk"</tt> when running on a Solaris machine.
+
+</blockquote>
+<a name="expressions"></a>
+<H3>Expressions</H3>
+<blockquote>
+
+An expression evaluates to a value or fails to terminate.  A value is
+either a list of strings or a function.
+
+<p>There are three types of expressions.  An expression is either an
+item, a list, or a block.  A list is a sequence of zero or more items.
+If a list contains no items, it evaluates to the empty list of
+strings.  If the list contains one item, the value of the list is the
+value of the item.  Otherwise, each item in the list must produce a
+list of strings, all of which are concatenated to produce the value of the
+list.
+
+<p><a href="#block">Blocks</a> are described later, and 
+the various categories of items are described next.  In what
+follows, Item stands for an expression that is an item, List for a
+list, and Identifier stands for a Java Identifier or one of the four
+characters <tt>@</tt>, <tt>&lt;</tt>, <tt>?</tt>, or <tt>%</tt>.  The
+pattern Thing... indicates zero or more Things, and Thing,,, indicates
+one or more Things separated by commas.
+
+<h4>String Constant</h4>
+Syntax: <tt>"</tt> Characters... <tt>"</tt>
+
+<p>A string constant evaluates to a list of strings of length one.
+
+<h4>Variable Reference</h4>
+Syntax: Identifier
+
+<p>The language of expressions is lexically scoped.  There are two
+types of variables, lexical and global.
+
+<p>Every lexical variable is introduced by a binding construct, which
+is either a block expression, a function constant, or a do loop.  A
+binding construct binds lexical variables to values.  A reference to
+the variable evaluates to the value.
+
+<p>Each global variable is bound to a location.  An assignment
+statement overwrites the value in the variable's location.  A
+reference to a global variable evaluates to the value in its location.
+The location of a variable which is not predefined initially contains
+the empty list of strings.
+
+<h4>Function Call</h4>
+Syntax: (Item List,,,)
+
+<p>The operands in List,,, are evaluated in order, and the operator
+Item is evaluated.  The operator must evaluate to a function which is
+invoked with the values of the operands.
+
+<h4>Function Constant</h4>
+Syntax: <tt>function</tt> (Identifier,,,) Block end
+
+<p>A function constant evaluates to a function.  When the value is
+invoked with some arguments, the lexical variables named by Identifier,,,
+are bound to the arguments and the block is evaluated. 
+
+<a name="block"></a>
+<h4>Block</h4>
+Syntax: { Block } 
+<br>
+where Block <tt>-&gt;</tt> Assignment... List
+
+<p>A block is a sequence of zero or more lexical assignments followed
+by a list.  When the block is a list, the block evaluates to the value
+of the list.  Otherwise the block has the form
+
+<blockquote>
+Identifier = List ; Block
+</blockquote>
+
+where Identifier names a lexical variable.
+
+When List is not a function constant, the value is equivalent to
+evaluating List, binding the variable to value of the list, and then
+evaluating Block.
+
+<p>For example,
+<blockquote>
+<pre>
+z = "a"; z z
+</pre>
+</blockquote>
+
+Evaluates to <tt>"a" "a"</tt>.
+
+<p>When List is a function constant, the scope of the variable
+includes List in addition to Block.  
+
+<p>For example,
+
+<blockquote>
+<pre>
+g = function(x, y) 
+      if y then
+        (g x y,) 
+      else 
+        x
+      end 
+    end;
+(g "a", "b")
+</pre>
+</blockquote>
+
+Evaluates to <tt>"a" "b"</tt>.
+
+<a name="conditional_expressions"></a>
+<h4>Conditional Expression</h4>
+Syntax: <tt>if</tt> List <tt>then</tt> Block1 <tt>else</tt> Block2 <tt>end</tt>
+
+<p>If List evaluates to a nonempty list of strings, the conditional
+evaluates to the value of Block1.  If List evaluates to the empty
+list strings, the conditional evaluates to the value of Block2.
+
+<p>For example, to compute the directories under edu that contain
+source files,
+<blockquote>
+<pre>
+# Predicate for filter
+dir_has_src = function(dir) 
+  (glob (cat dir "/*.java")) 
+end;
+
+# Filter out elements of list 
+# that do not satisfy pred
+filter = function(pred, list)
+  if list then
+    if (pred (first list)) then
+      (first list) (filter pred, (rest list))
+    else
+      (filter pred, (rest list))
+    end
+  else
+  end
+end;
+
+dirs_with_source 
+  = (filter dir_has_src, (dirs "edu"));
+</pre>
+</blockquote>
+
+<h4>Do Loop</h4>
+Syntax: <tt>do</tt> Identifier0 (Initializer,,,) Block end
+<br>
+where Initializer <tt>-&gt;</tt> Identifier1 = List1
+
+<p>A do loop is an abbreviation for
+
+<blockquote>
+{ Identifier0 = <tt>function</tt>(Identifier1,,,) Block <tt>end</tt>; 
+(Identifier0 List1,,,) }
+</blockquote>
+
+For example,
+<blockquote>
+<pre>
+do h(x = "a", y = "b")
+  if y then 
+    (h x y,) 
+  else
+    x
+  end 
+end
+</pre>
+</blockquote>
+
+Evaluates to <tt>"a" "b"</tt>.
+
+</blockquote>
+<a name="example"></a>
+<H3>Example</H3>
+<blockquote>
+
+<pre>
+# A makefile file for jmk -- Make in Java
+
+javaflags = "-O";
+
+# jmk is in one package.
+pkg = "edu.neu.ccs.jmk";
+
+srcdir = (subst ".", "/", pkg);
+# srcs contains all the Java source files.
+srcs = (glob (join srcdir, "/*.java"));
+
+jar = "jmk.jar";
+
+"all":	jar;    # all is the default target.
+
+# The following rule only compiles out of date 
+# source files.  Sometimes the clean target
+# must be used to force the compilation of the 
+# entire system, such as when an inherited class
+# is changed.
+jar:	srcs;
+{
+  exec "javac" javaflags ?;
+  exec "jar" "cf" @ "edu";
+}
+
+# doc is the target for running javadoc.
+"doc": "docs" "docs/index.html";
+
+"docs":;
+{
+  mkdir @;
+}
+
+"docs/index.html": srcs;
+{
+  exec "javadoc" "-package" "-d" "docs" pkg;
+}
+
+"clean":;
+{
+  delete (join srcdir, "/*.class") jar;
+}
+
+".PHONY": "clean" "doc" "all";
+</pre>
+
+</blockquote>
+<a name="grammar"></a>
+<H3>Grammar</H3>
+<blockquote>
+
+<p>The makefile loader expects input to conform to the grammar given
+below.  Comments start with the sharp sign character
+(<tt>#</tt>) and continue to the end of the line.  In the grammar,
+syntactic categories begin with an uppercase letter.  The pattern
+Thing... indicates zero or more Things, Thing,,, indicates one or more
+Things separated by commas, and vertical bar indicates alternatives.
+
+<blockquote>
+Makefile <tt>-&gt;</tt> Statement Statement...
+<br>
+Statement <tt>-&gt;</tt> Assignment | Rule | Inclusion | Conditional
+<br>
+Assignment <tt>-&gt;</tt> Identifier = List ;
+<br>
+List <tt>-&gt;</tt> Item...
+<br>
+Item <tt>-&gt;</tt> String | Identifier | (Item List,,,)
+| { Block } 
+| <tt>if</tt> List <tt>then</tt> Block <tt>else</tt> Block <tt>end</tt>
+| <tt>function</tt> (Identifier,,,) Block <tt>end</tt>
+| <tt>do</tt> Identifier (Initializer,,,) Block <tt>end</tt>
+<br>
+Block <tt>-&gt;</tt> Assignment... List
+<br>
+Initializer <tt>-&gt;</tt> Identifier = List
+<br>
+Rule <tt>-&gt;</tt> Item List : List ; Commands
+<br>
+Commands <tt>-&gt;</tt> | { Command... }
+<br>
+Command <tt>-&gt;</tt> Ignore Operator List ;
+<br>
+Ignore <tt>-&gt;</tt> | -
+<br>
+Operator <tt>-&gt;</tt> <tt>exec</tt> | <tt>delete</tt> |
+<tt>delall</tt> | <tt>mkdir</tt> | 
+<tt>mkdirs</tt> | <tt>copy</tt> | <tt>rename</tt>
+| <tt>create</tt> | <tt>note</tt> | <tt>forname</tt>
+<br>
+Inclusion <tt>-&gt;</tt> <tt>include</tt> List ;
+<br>
+Conditional <tt>-&gt;</tt> <tt>if</tt> List <tt>then</tt>
+Statement... Alternative <tt>end</tt>
+<br>
+Alternative <tt>-&gt;</tt> | <tt>else</tt> Statement...
+<br>
+String <tt>-&gt;</tt> <tt>"</tt> Characters... <tt>"</tt>
+<br>
+Identifier <tt>-&gt;</tt> JavaIdentifier | <tt>@</tt> | <tt>&lt;</tt> | 
+<tt>?</tt> | <tt>%</tt>
+</blockquote>
+
+<p>The JavaIdentifiers that are reserved and not available as
+Identifiers are <tt>include</tt>, <tt>if</tt>, <tt>then</tt>,
+<tt>else</tt>, <tt>end</tt>, <tt>function</tt>, and <tt>do</tt>.
+
+</blockquote>
+<a name="options"></a>
+<h2>OPTIONS</h2>
+<blockquote>
+
+<dl>
+<dt><tt>-f</tt> <em>filename</em>
+<dd>
+Use <em>filename</em> for the makefile.
+The default is <tt>makefile.jmk</tt>.
+<dt><tt>-d</tt>
+<dd>
+Print additional information during a <tt>jmk</tt> run.
+<dt><tt>-n</tt>
+<dd>
+Print but do not run commands during a <tt>jmk</tt> run.
+<dt><tt>-w</tt>
+<dd>
+Use an AWT window for <tt>jmk</tt> output.
+<dt><tt>-s</tt>
+<dd>
+Use a Swing window for <tt>jmk</tt> output.
+<dt><tt>-v</tt>
+<dd>
+Print the version number.
+</dl>
+
+</blockquote>
+<a name="properties"></a>
+<h2>PROPERTIES</h2>
+<blockquote>
+
+Window properties are set by placing the file <tt>jmk.properties</tt>
+in the class path.  The following properties can be set in the
+properties file.
+<dl>
+<dt><tt>jmk.columns:</tt> <em>columns</em>
+<dd>
+Create a transcript window that displays <em>columns</em> characters
+on a line of text.
+<dt><tt>jmk.rows:</tt> <em>rows</em>
+<dd>
+Create a transcript window that displays <em>rows</em> lines of text.
+<dt><tt>jmk.font:</tt> <em>font</em>
+<dd>
+Use <em>font</em> as the default font.
+</dl>
+
+</blockquote>
+<h2>ACKNOWLEDGMENTS</h2>
+<blockquote>
+
+Make in Java was inspired by and is loosely based on the Unix <a
+href="#POSIX92">make</a> utility.  Thanks go to Richard Stallman and
+Roland McGrath for making the sources and documentation for <a
+href="#StallmanMcGrath96">GNU make</a> available to all.
+
+</blockquote>
+<h2>REFERENCES</h2>
+<blockquote>
+
+<dl>
+<dt><a name="POSIX92"></a>[POSIX92]
+<dd>
+IEEE Computer Society.
+<em>IEEE Standard for Information Technology--Portable Operating
+System Interface (POSIX)--Part 2: Shell and Utilities</em>, volume&nbsp;1.
+Institute of Electrical and Electronics Engineers, Inc., New York,
+NY, USA, 1992.
+Std 1003.2-1992.
+pp.&nbsp;666-679.
+<dt><a name="StallmanMcGrath96"></a>[StallmanMcGrath96]
+<dd>
+Richard M. Stallman and Roland McGrath.
+<em>GNU Make</em>.
+Free Software Foundation, 0.51 edition, 1996.
+</dl>
+
+</blockquote>
+<h2>LICENSE</h2>
+<blockquote>
+
+The <tt>jmk</tt> program including its sources and documentation
+is covered by the <a href="lesser.txt">GNU Lesser General Public License</A>.
+
+</blockquote>
+<h2>AUTHOR</h2>
+<blockquote>
+
+<a href="http://jmk.sourceforge.net">John D. Ramsdell</a> 
+
+</blockquote>
+
+[<a href="#top">Top</a>]
+
+</BODY>
+</HTML>

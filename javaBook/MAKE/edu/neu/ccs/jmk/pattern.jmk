@@ -1,0 +1,16 @@
+# $Id: pattern.jmk,v 1.1.1.1 2000/09/26 11:20:34 ramsdell Exp $
+
+# This make file invokes javac for every out of date file.  SLOW!
+
+javaflags = "-g";
+
+"%.class": "%.java";
+{
+  exec "javac" javaflags <;
+}
+
+srcs = (glob "edu/neu/ccs/jmk/*.java");
+
+classes = (patsubst ".java", ".class", srcs);
+
+"all":	classes;

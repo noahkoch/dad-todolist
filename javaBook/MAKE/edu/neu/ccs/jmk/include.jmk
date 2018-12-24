@@ -1,0 +1,16 @@
+# $Id: include.jmk,v 1.1.1.1 2000/09/26 11:20:35 ramsdell Exp $
+
+# Include and conditional tester
+
+if a then
+ b = "abc";
+else
+ a = "xyz";
+ include "include.jmk";
+ if (equal b, "abc") then
+   "all":;
+   {
+     note a b;
+   }
+ end
+end

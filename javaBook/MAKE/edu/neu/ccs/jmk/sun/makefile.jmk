@@ -1,0 +1,39 @@
+# $Id: makefile.jmk,v 1.1.1.1 2000/09/26 11:20:35 ramsdell Exp $
+
+# A makefile file for Sun's JDK1.2 tools as operators.
+# Javac and Jar in the same VM as JMK.
+
+# These extensions are not recommended because they
+# bind the makefile to a particular version of Sun JDK.
+# For example, the use of javac in JDK1.2 requires the 
+# addition of tools.jar to the class path, but this is
+# not required in JDK1.1.
+
+# To recompile the operators, 
+# start jmk in the root of the directory structure.
+# On Unix, the command is:
+# $ jmk -f edu/neu/ccs/jmk/sun/makefile.jmk
+#
+
+# Sun JDK's main package.
+pkg = "edu.neu.ccs.jmk.sun";
+
+srcdir = (subst ".", "/", pkg);
+# srcs contains all the Java source files.
+srcs = (glob (cat srcdir "/*.java"));
+clss = (patsubst ".java", ".class", srcs);
+tools = (cat ".;" (getprop "java.home") "/../lib/tools.jar");
+javaflags = "-classpath" tools;
+
+"all":	clss;    # all is the default target.
+
+"%.class": "%.java"; {
+  exec "javac" javaflags <;
+}
+
+"clean":;
+{
+  delete (cat srcdir "/*.class");
+}
+
+".PHONY": "clean" "all";

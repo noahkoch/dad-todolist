@@ -1,0 +1,222 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+                 "http://www.w3.org/TR/REC-html40/loose.dtd">
+<!-- $Id: changes.html,v 1.1.1.1 2000/09/26 11:20:34 ramsdell Exp $ -->
+<HTML>
+<HEAD>
+   <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=iso-8859-1">
+   <META NAME="Author" CONTENT="John D. Ramsdell">
+   <META NAME="GENERATOR" CONTENT="GNU Emacs 19">
+   <TITLE>Changes to Make in Java</TITLE>
+</HEAD>
+
+<!--
+/*
+ * Copyright 1997 by John D. Ramsdell
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
+-->
+
+<BODY bgcolor="white">
+<A NAME="Top"></A>
+[<a href="index.html">Index</a>]
+<H1>Changes to Make in Java</H1>
+
+<p>The current Make in Java is version 1.4 released on 21 September 2000.
+
+<ul>
+
+<li>Added $Id: changes.html,v 1.1.1.1 2000/09/26 11:20:34 ramsdell Exp $ tags for use with CVS.
+
+<li>Moved sources to <a
+href="http://jmk.sourceforge.net">http://jmk.sourceforge.net</a>.
+
+</ul>
+
+<p>The current Make in Java is version 1.3 released on 19 October 1999.
+
+<h2>Changes from version 1.2 to version 1.3</h2>
+
+<ul>
+<li>Added a recursive delete operator called delall.
+<li>Added filter function example to the documentation.
+<li>Documentation corrected to state the purpose of JMK is to support
+the task of writing platform independent makefiles.
+</ul>
+
+<h2>Changes from version 1.1 to version 1.2</h2>
+
+<ul>
+<li>Swing GUI changes.
+<ul>
+  <li>Word wrapping.</li>
+  <li>Color Hilightning.</li>
+  <li>Load/Save Properties.</li>
+  <li>Mac look and feel.</li>
+  <li>Flag indicator.</li>
+</ul>
+
+<li>File names given to the glob function and file operators may
+contain more than one wild card character.
+</ul>
+
+<h2>Changes from version 1.0 to version 1.1</h2>
+
+<ul>
+  <li>Made the enter key start a make process in the swing interface.
+  <li>Added functions first, rest, dirs, and load.  See the section on
+  <a href="jmk.html#functions">functions</a> in the user documentation.
+  <li>Changed the license to the Lesser General Public License.
+</ul>
+
+<h2>Changes from version 0.9 to version 1.0</h2>
+
+<ul>
+<li>The generic path separator character has been changed from colon
+to semicolon.  Old makefiles that use generic path lists must be modified
+to reflect this change.
+</ul>
+
+<h2>Changes from version 0.8 to version 0.9</h2>
+
+<ul>
+<li>
+<tt>-s</tt> option gives a new graphical interface based on Swing.
+Olivier Refalo contributed the interface.
+
+<li>The AWT graphical interface is invoked when there is a linkage
+failure in the swing interface.
+
+<li>Expressions in the commands associated with a rule are evaluated
+when the rule's commands are executed.  
+
+<li>There are now two types of
+values used to specify rules: lists of strings and functions.  Syntax
+has been added to allow the construction of user defined functions.
+The new syntax causes the following incompatible changes:
+<ul>
+<li><tt>function</tt> and <tt>do</tt> are now reserved words.
+<li>There is no longer a separate name space for functions.
+</ul>
+</ul>
+
+<h2>Changes from version 0.7 to version 0.8</h2>
+
+<ul>
+<li>A command preceded by "-" ignores errors.
+<li>File operations try all arguments before failing.
+<li>appendLine and appendLongLine in MakeWindow are no longer synchronized.
+<li>The online documentation pages conform to the HTML 4.0 traditional DTD.
+</ul>
+
+<h2>Changes from version 0.6 to version 0.7</h2>
+
+<ul>
+<li> Fixed a bug in file last modified time caching.
+<li> Recursive makes implemented.  All prerequisites of a target are
+made before the target is analyzed.
+<li> Added class edu.neu.ccs.jmk.shell.Kawa which allows commands
+to be written in Scheme.
+<li> Fixed a bug in parse error messages as the line number was always
+one less than it should be.
+<li> Removed Linux JDK 1.1.3 hacks.  All is fine under Linux JDK
+1.1.6.
+<li> Added Make Writer, a writer for output to the make window.  This
+object eliminates the need for a thread.
+</ul>
+
+<h2>Changes from version 0.5 to version 0.6</h2>
+
+<ul>
+<li> Class edu.neu.ccs.jmk.Make implements the Operator interface
+allowing the invocation of <tt>jmk</tt> from commands in makefiles.
+<li> Added class edu.neu.ccs.jmk.shell.JPython which allows commands
+to be written in Python.
+</ul>
+
+<h2>Changes from version 0.4 to version 0.5</h2>
+
+<ul>
+<li> Added the rename and copy file operator.
+<li> Added the create operator.
+<li> Changed MakeWindow so that it compiles on Linux JDK 1.1.3
+</ul>
+
+<h2>Changes from version 0.3 to version 0.4</h2>
+
+<ul>
+<li> Added the file inclusion command.
+<li> Added conditionals.
+<li> Added the <tt>equal</tt> string function.
+<li> The Make object stores its associated file as a java.io.File, not
+a string.
+</ul>
+
+<h2>Changes from version 0.2 to version 0.3</h2>
+<ul>
+<li> Changed the operator interface so that exec includes a
+PrintWriter.  This change was made so that multiple make windows can
+be run within one Java virtual machine.
+<li> Added a task thread when using the window interface.  Make and 
+load run in this thread instead of the window thread.
+<li> A make run can be cancelled.  The make run is interrupted as soon
+as the currently executing command terminates.
+<li> The make short cut was changed from 'M' to 'A' because it invoked
+make twice on Windows 95.
+<li> Added a menu item that transfers the transcript to the system
+clipboard.
+<li> Added the note command operator.
+<li> Added a Java trademark notice to <tt>index.html</tt>.
+</ul>
+
+<h2>Changes from version 0.1 to version 0.2</h2>
+<ul>
+<li> Changed the jar file name to <tt>jmk.jar</tt>.
+<li> Changed the package to <tt>edu.neu.ccs.jmk</tt>.
+<li> In class Make, the appropriate methods are now public so that
+other applications can easily use the class.
+<li> Changed debug mode (<tt>-d</tt>) so that it prints assignments in
+addition to the previous information printed about rule interpretation.
+<li> Added just print mode (<tt>-n</tt>) which prints, but does not
+run commands.
+<li> Added a main method in MakeWindow for starting the application in
+a window without command line arguments.
+<li> All options set on the command line can be set in the make window.
+<li> Window size and font information are obtained from the
+<tt>jmk.properties</tt> file in the current class path. 
+</ul>
+
+<h2>Future Plans</h2>
+
+<p>The next major release will incorporate more features enabled by JDK1.2.
+This includes an HTML pane for displaying the user documentation within the
+application.
+
+<p>The semantics of pattern rules should be more like those in GNU Make.
+
+<p>In a block, a sequence of local assignments of function constants
+should create mutually recursive definitions.
+
+<p>The program should use the internationalization facilities to
+produce error messages in multiple languages.
+
+<p>Suggestions for new features are welcome.
+<hr>
+[<a href="#top">Top</a>]
+<address>
+<a href="http://jmk.sourceforge.net">John D. Ramsdell</a> 
+</address>
+</BODY>
+</HTML>
